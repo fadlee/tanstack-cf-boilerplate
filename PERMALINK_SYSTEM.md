@@ -1,24 +1,6 @@
-# WordPress-like Permalink System
+# WordPress-like Permalink System - POC
 
-This application implements a catch-all route system similar to WordPress permalinks, allowing dynamic content to be served from a single database based on URL slugs.
-
-## Architecture
-
-### Database Schema
-
-**Table: `contents`**
-
-| Column      | Type    | Description                                      |
-|-------------|---------|--------------------------------------------------|
-| id          | INTEGER | Primary key, auto-increment                       |
-| slug        | TEXT    | Unique identifier (e.g., "about", "about/history") |
-| title       | TEXT    | Page/post title                                   |
-| content     | TEXT    | HTML content                                      |
-| excerpt     | TEXT    | Short description (optional)                      |
-| type        | TEXT    | Either 'page' or 'post'                          |
-| status      | TEXT    | 'draft' or 'published'                           |
-| created_at  | DATETIME| Creation timestamp                               |
-| updated_at  | DATETIME| Last update timestamp                             |
+This is a proof-of-concept for a catch-all route system similar to WordPress permalinks, allowing dynamic content to be served based on URL slugs with nested paths support.
 
 ## How It Works
 
@@ -27,7 +9,7 @@ This application implements a catch-all route system similar to WordPress permal
 TanStack Router uses `$` for splat/catch-all routes. This captures all URL segments after the domain:
 
 - `/about` → slug: "about"
-- `/about/history` → slug: "about/history"
+- `/about/history` → slug: "about/history"  
 - `/blog/first-post` → slug: "blog/first-post"
 
 ### 2. Route Loader
@@ -35,71 +17,64 @@ TanStack Router uses `$` for splat/catch-all routes. This captures all URL segme
 The route loader:
 1. Extracts the slug from the URL (`params._splat`)
 2. Calls `getContentBySlug(slug)` server function
-3. Queries D1 database for matching published content
-4. Returns content or throws 404 error
+3. Returns matching content or `null` for 404
 
 ### 3. Server Function (`src/lib/content.server.ts`)
 
+Currently uses **mock data** for testing:
+
 ```typescript
+const MOCK_CONTENTS: Record<string, Content> = {
+  'about': { id: 1, slug: 'about', title: 'About Us', ... },
+  'about/history': { id: 2, slug: 'about/history', title: 'Company History', ... },
+  'contact': { id: 3, slug: 'contact', title: 'Contact Us', ... },
+  'blog/first-post': { id: 4, slug: 'blog/first-post', title: 'My First Blog Post', ... },
+}
+
 export const getContentBySlug = createServerFn(
   { method: 'GET' },
   async (slug: string): Promise<Content | null> => {
-    // Query D1 database
-    const result = await db
-      .prepare(
-        'SELECT * FROM contents WHERE slug = ? AND status = "published"'
-      )
-      .bind(slug)
-      .first<Content>()
-    
-    return result || null
+    return MOCK_CONTENTS[slug] || null
   }
 )
 ```
 
-The `status = "published"` check ensures only published content is visible.
-
 ### 4. Content Component
 
-The component renders the content with:
+Renders content with:
 - Page/post type badge
 - Publication date
 - Excerpt (if available)
-- Main content (rendered as HTML)
+- Main HTML content
 - Navigation back to home
+- 404 page for missing content
 
-## Adding Content
+## Content Interface
 
-### Via SQL
-
-```sql
-INSERT INTO contents (slug, title, content, excerpt, type, status)
-VALUES (
-  'services/web-development',
-  'Web Development Services',
-  '<h1>Professional Web Development</h1><p>We build amazing websites...</p>',
-  'High-quality web development services',
-  'page',
-  'published'
-);
-```
-
-### Via Wrangler CLI
-
-```bash
-npx wrangler d1 execute arrahmah_db --remote --command "INSERT INTO contents ..."
+```typescript
+interface Content {
+  id: number
+  slug: string              // e.g., "about/history"
+  title: string
+  content: string          // HTML content
+  excerpt?: string
+  type: 'page' | 'post'
+  status: 'draft' | 'published'
+  created_at: string       // ISO timestamp
+  updated_at: string       // ISO timestamp
+}
 ```
 
 ## Testing Routes
 
-The home page includes links to test the system:
+The home page includes quick links to test:
 
 - `/about` - Single-level page
 - `/about/history` - Nested page
-- `/contact` - Another single-level page
+- `/contact` - Another page
 - `/blog/first-post` - Nested blog post
 
-Try accessing a non-existent slug to see the 404 error page.
+Try a non-existent slug (e.g., `/not-found`) to see the 404 page.
 
 ## URL Structure Examples
 
@@ -114,39 +89,44 @@ Try accessing a non-existent slug to see the 404 error page.
 ## Key Features
 
 ✅ **Nested slugs** - No depth limit  
-✅ **Single database** - All content in one table  
-✅ **Status filtering** - Draft posts hidden from public  
-✅ **Type distinction** - Separate pages and posts  
+✅ **Mock data** - Easy testing without database setup  
 ✅ **Type safety** - Full TypeScript support  
 ✅ **Server-side rendering** - Fast initial page load  
-✅ **Cloudflare Workers** - Globally distributed  
+✅ **Clean 404 handling** - Graceful not-found pages  
 
-## Configuration
+## Next Steps: Database Integration
 
-### Database Binding
+To replace mock data with a real database (Cloudflare D1, PostgreSQL, etc.):
 
-Set in `wrangler.jsonc`:
+1. Update `getContentBySlug` in `src/lib/content.server.ts` to query your database
+2. Update the `Content` interface if needed
+3. Add database binding to `wrangler.jsonc`
+4. Remove `MOCK_CONTENTS` constant
 
-```jsonc
-{
-  "d1_databases": [
-    {
-      "binding": "arrahmah_db",
-      "database_name": "arrahmah_db",
-      "database_id": "a8c77721-ddf3-4200-bcc7-3a3d2179a298",
-      "remote": true
-    }
-  ]
-}
+Example for D1:
+
+```typescript
+export const getContentBySlug = createServerFn(
+  { method: 'GET' },
+  async (slug: string): Promise<Content | null> => {
+    const db = (globalThis as any).MY_DB
+    const result = await db
+      .prepare('SELECT * FROM contents WHERE slug = ? AND status = "published"')
+      .bind(slug)
+      .first<Content>()
+    return result || null
+  }
+)
 ```
-
-The binding name (`arrahmah_db`) is used in server functions as `(globalThis as any).arrahmah_db`.
 
 ## Deployment
 
 ```bash
+# Build
+npm run build
+
 # Deploy to Cloudflare Workers
 npm run deploy
 ```
 
-The catch-all route will handle all requests not matching specific routes, allowing WordPress-style permalinks across your entire site.
+The catch-all route will handle all requests not matching specific routes.

@@ -5,13 +5,5 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
-	"main": "@tanstack/react-start/server-entry",
-	"d1_databases": [
-		{
-			"binding": "arrahmah_db",
-			"database_name": "arrahmah_db",
-			"database_id": "a8c77721-ddf3-4200-bcc7-3a3d2179a298",
-			"remote": true
-		}
-	]
+	"main": "@tanstack/react-start/server-entry"
 }
