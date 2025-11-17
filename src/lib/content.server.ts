@@ -1,5 +1,3 @@
-import { createServerFn } from '@tanstack/react-start'
-
 export interface Content {
   id: number
   slug: string
@@ -31,6 +29,7 @@ const MOCK_CONTENTS: Record<string, Content> = {
     excerpt: 'Our journey and milestones',
     content: '<h1>Our History</h1><p>Founded in 2020, we have grown exponentially.</p>',
     type: 'page',
+
     status: 'published',
     created_at: '2024-01-02T00:00:00Z',
     updated_at: '2024-01-02T00:00:00Z',
@@ -59,14 +58,6 @@ const MOCK_CONTENTS: Record<string, Content> = {
   },
 }
 
-export const getContentBySlug = createServerFn(
-  { method: 'GET' },
-  async (slug: string): Promise<Content | null> => {
-    try {
-      return MOCK_CONTENTS[slug] || null
-    } catch (error) {
-      console.error('Error fetching content:', error)
-      return null
-    }
-  }
-)
+export const getContentBySlug = (slug: string): Content | null => {
+  return MOCK_CONTENTS[slug] || null
+}
