@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "tanstack-cf-boilerplate",
+      "name": "arrahmah-2025",
       "dependencies": {
         "@cloudflare/vite-plugin": "^1.13.8",
         "@tailwindcss/vite": "^4.0.6",

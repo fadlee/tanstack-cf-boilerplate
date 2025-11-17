@@ -1,11 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import {
-  Zap,
-  Server,
   Route as RouteIcon,
+  Server,
   Shield,
-  Waves,
   Sparkles,
+  Waves,
+  Zap,
 } from 'lucide-react'
 
 export const Route = createFileRoute('/')({ component: App })
@@ -111,6 +111,45 @@ function App() {
               </p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="py-16 px-6 max-w-7xl mx-auto border-t border-slate-700">
+        <h2 className="text-3xl font-bold text-white mb-8">
+          WordPress-like Permalink System
+        </h2>
+        <p className="text-gray-300 mb-6">
+          Try accessing these routes via catch-all route system:
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <a
+            href="/about"
+            className="block p-4 bg-slate-800/50 border border-slate-700 rounded-lg hover:border-cyan-500/50 hover:bg-slate-800 transition-all"
+          >
+            <div className="text-cyan-400 font-semibold">/about</div>
+            <div className="text-gray-400 text-sm">Single level page</div>
+          </a>
+          <a
+            href="/about/history"
+            className="block p-4 bg-slate-800/50 border border-slate-700 rounded-lg hover:border-cyan-500/50 hover:bg-slate-800 transition-all"
+          >
+            <div className="text-cyan-400 font-semibold">/about/history</div>
+            <div className="text-gray-400 text-sm">Nested slug page</div>
+          </a>
+          <a
+            href="/contact"
+            className="block p-4 bg-slate-800/50 border border-slate-700 rounded-lg hover:border-cyan-500/50 hover:bg-slate-800 transition-all"
+          >
+            <div className="text-cyan-400 font-semibold">/contact</div>
+            <div className="text-gray-400 text-sm">Single level page</div>
+          </a>
+          <a
+            href="/blog/first-post"
+            className="block p-4 bg-slate-800/50 border border-slate-700 rounded-lg hover:border-cyan-500/50 hover:bg-slate-800 transition-all"
+          >
+            <div className="text-cyan-400 font-semibold">/blog/first-post</div>
+            <div className="text-gray-400 text-sm">Nested blog post</div>
+          </a>
         </div>
       </section>
     </div>
