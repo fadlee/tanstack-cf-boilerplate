@@ -1,44 +1,48 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 
 import { getContentBySlug } from '../lib/content.server'
 import type { Content } from '../lib/content.server'
 
 export const Route = createFileRoute('/$')({
-  loader: async ({ params }): Promise<Content> => {
+  loader: async ({ params }): Promise<Content | null> => {
     const slug = params._splat || ''
 
     if (!slug) {
-      throw new Error('Page not found')
+      return null
     }
 
-    const content = await getContentBySlug(slug)
-
-    if (!content) {
-      throw new Error('Content not found')
+    try {
+      const content = await getContentBySlug(slug)
+      return content
+    } catch (error) {
+      console.error('Error fetching content:', error)
+      return null
     }
-
-    return content
   },
-
-  errorComponent: ({ error }) => (
-    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-gray-300 mb-8">
-          {error instanceof Error ? error.message : 'Page not found'}
-        </p>
-        <a href="/" className="text-cyan-400 hover:text-cyan-300">
-          Back to Home
-        </a>
-      </div>
-    </div>
-  ),
 
   component: ContentPage,
 })
 
 function ContentPage() {
   const content = Route.useLoaderData()
+  const router = useRouter()
+
+  if (!content) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-4">404</h1>
+          <p className="text-gray-300 mb-8">Page not found</p>
+          <button
+            onClick={() => router.history.back()}
+            className="text-cyan-400 hover:text-cyan-300"
+          >
+            ← Back
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
